@@ -1,0 +1,35 @@
+---
+- name: Allow firewall needs services
+  ignore_errors: True
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+  with_items:
+    - "{{ 80 }}"
+    - "{{ 443 }}"
+    - "{{ 636 }}"
+    - "{{ 389 }}"
+    - "{{ 88 }}"
+    - "{{ 464 }}"
+    - "{{ 53 }}"
+    - "{{ 7389 }}"
+- name: Allow IPA UDP ports
+  firewalld:
+    port: "{{ item }}/udp"
+    permanent: true
+    state: enabled
+  with_items:
+    - "{{ 53 }}"
+    - "{{ 88 }}"
+    - "{{ 463 }}"
+    - "{{ 123 }}"
+  notify:
+    - restart Firewall
+
+- name: Add line to hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.line }}"
+  with_items:
+    - { line: '{{ ipa-server_ip_address }}	{{ ipa-server_hostname }}' }

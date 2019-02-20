@@ -1,0 +1,5 @@
+---
+- include: deb/pre-requirements_configuration.yml
+- include: deb/install_freeipa-server.yml
+
+
