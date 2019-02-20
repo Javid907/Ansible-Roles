@@ -45,12 +45,7 @@
   when: ipa_client.rc == 1
 
 - name: Generate CSR via OpenSSL
-  openssl_csr:
-    path: /etc/pki/tls/certs/{{ inventory_hostname }}.csr
-    privatekey_path: /etc/pki/tls/private/{{ inventory_hostname }}.key
-    country_name: {{ country_domain }}
-    organization_name: {{ org_name }}
-    common_name: {{ inventory_hostname }}
+  openssl_csr: path=/etc/pki/tls/certs/{{ inventory_hostname }}.csr privatekey_path=/etc/pki/tls/private/{{ inventory_hostname }}.key country_name={{ country_domain }} organization_name={{ org_name }} common_name={{ inventory_hostname }}
   when: ipa_client.rc == 1
 
 - name: Generate Certs via OpenSSL
@@ -62,3 +57,4 @@
   when: ipa_client.rc == 1
   notify:
     - restart Apache
+

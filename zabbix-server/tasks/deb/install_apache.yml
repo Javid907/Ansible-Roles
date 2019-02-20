@@ -29,11 +29,7 @@
   service: name=firewalld state=started enabled=yes
 
 - name: Add port to Firewall
-  firewalld:
-    zone: public
-    interface: {{ ansible_default_ipv4.interface }}
-    permanent: yes
-    state: enabled
+  firewalld: zone=public interface={{ ansible_default_ipv4.interface }} permanent=yes state=enabled
 
 - name: Allow HTTP and HTTPS ports
   firewalld:
@@ -64,12 +60,7 @@
   when: ipa_client.rc == 1
 
 - name: Generate CSR via OpenSSL
-  openssl_csr:
-    path: /etc/pki/tls/certs/{{ inventory_hostname }}.csr
-    privatekey_path: /etc/pki/tls/private/{{ inventory_hostname }}.key
-    country_name: {{ country_domain }}
-    organization_name: {{ org_name }}
-    common_name: {{ inventory_hostname }}
+  openssl_csr: path=/etc/pki/tls/certs/{{ inventory_hostname }}.csr privatekey_path=/etc/pki/tls/private/{{ inventory_hostname }}.key country_name={{ country_domain }} organization_name={{ org_name }} common_name={{ inventory_hostname }}
   when: ipa_client.rc == 1
 
 - name: Generate Certs via OpenSSL
@@ -85,3 +76,4 @@
 
 - name: Restart Firewall
   service: name=firewalld state=restarted
+
