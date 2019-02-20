@@ -36,6 +36,7 @@
     packages:
     - zabbix-frontend-php
     - zabbix-server-mysql
+    - zabbix-agent
 
 - name: Import sql in database 1
   ignore_errors: yes
