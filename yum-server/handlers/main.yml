@@ -1,0 +1,6 @@
+---
+- name: restart Firewall
+  systemd: name=firewalld state=restarted
+
+- name: restart Apache
+  systemd: name=httpd state=restarted
