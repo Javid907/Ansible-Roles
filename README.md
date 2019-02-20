@@ -1,4 +1,6 @@
 # Ansible-Roles
 Dear friends
 
-I used in these roles generate certificats from FreeIPA and all roles for Red Hat 7 (Centos7)
+Every role was check in Debian9(Ubuntu) and RedHat7(Centos).
+
+Also in my infrastructure I used FreeIPA how CA, because I take certificates from its. But for others I added also openssl, because in every role I used HTTPS. 
