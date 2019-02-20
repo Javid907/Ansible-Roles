@@ -27,9 +27,3 @@
     - bind-utils
     - yum-utils
 
-- name: replace line
-  lineinfile: 
-    dest: /etc/php.ini 
-    regexp: ';date.timezone =' 
-    line: 'date.timezone = "{{ your_timezone }}"'
-    backrefs: yes

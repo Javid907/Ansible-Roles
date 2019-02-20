@@ -58,6 +58,15 @@
   notify:
     - restart Firewall
 
+- name: replace line
+  lineinfile:
+    dest: /etc/php.ini
+    regexp: ';date.timezone ='
+    line: 'date.timezone = "{{ your_timezone }}"'
+    backrefs: yes
+  notify:
+    - restart Apache
+
 - name: Selinux disable during start agent
   command: setenforce 0
 
