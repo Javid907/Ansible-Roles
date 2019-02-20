@@ -1,0 +1,35 @@
+---
+- name: Enable Epel
+  yum:
+    name: http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-11.noarch.rpm
+    disable_gpg_check: yes
+    state: present
+
+- name: Enable Remi
+  yum:
+    name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    disable_gpg_check: yes
+    state: present
+
+- name: Enable Remi Repo phpv72
+  command: yum-config-manager --enable remi-php72
+
+- name: Install Required Packages
+  yum:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - nano
+    - bash-completion
+    - wget
+    - telnet
+    - bind-utils
+    - yum-utils
+
+- name: replace line
+  lineinfile: 
+    dest: /etc/php.ini 
+    regexp: ';date.timezone =' 
+    line: 'date.timezone = "{{ your_timezone }}"'
+    backrefs: yes

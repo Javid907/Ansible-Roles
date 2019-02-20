@@ -1,0 +1,43 @@
+---
+- name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes
+
+- name: Set httpd_can_connect_zabbix flag on and keep it persistent across reboots
+  seboolean:
+    name: httpd_can_connect_zabbix
+    state: yes
+    persistent: yes
+
+- name: Set httpd_can_network flag on and keep it persistent across reboots
+  seboolean:
+    name: zabbix_can_network
+    state: yes
+    persistent: yes
+  notify:
+    - restart zabbixserver
+    - restart zabbixagent
+    - restart httpd
+
+- name: Install package for policycoreutils
+  yum: name=policycoreutils-python state=latest
+
+- name: Transfer the script
+  copy: src=../../files/zabbix-selinux.sh dest=/root mode=0755
+  
+- name: Execute the script
+  command: bash /root/zabbix-selinux.sh
+
+- name: start firewalld
+  service: name=firewalld state=restarted enabled=yes  
+  
+- name: start httpd
+  service: name=httpd state=restarted enabled=yes
+
+- name: start Zabbix Server 
+  service: name=zabbix-server state=restarted enabled=yes
+
+- name: start Zabbix Agent
+  service: name=zabbix-agent state=restarted enabled=yes

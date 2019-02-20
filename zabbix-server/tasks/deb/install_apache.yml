@@ -1,0 +1,87 @@
+---
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+
+- name: Install package for Apache
+  apt:
+    name: apache2
+    state: present
+
+- name: start Apache
+  service: name=apache2 state=started enabled=yes
+
+- name: Virtual Host Config
+  template:
+    src: zabbix-vhost.j2
+    dest: /etc/apache2/sites-enabled/{{ inventory_hostname }}.conf
+    owner: apache
+    group: apache
+    mode: 0640
+  
+- name: Install package Firewall
+  apt:
+    name: firewalld
+    state: present
+
+- name: start Firewall
+  service: name=firewalld state=started enabled=yes
+
+- name: Add port to Firewall
+  firewalld:
+    zone: public
+    interface: {{ ansible_default_ipv4.interface }}
+    permanent: yes
+    state: enabled
+
+- name: Allow HTTP and HTTPS ports
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+  with_items:
+    - "{{ 443 }}"
+  notify:
+    - restart Firewall
+
+- name: Check if ipa-client is installed
+  command: dpkg-query -l ipa-client
+  register: ipa_client
+
+- name: Kinit IPA 
+  shell: echo "{{ ipaclient_password }}" | kinit {{ ipaclient_principal }}
+  when: ipa_client.rc == 0
+
+- name: Generate cert from FreeIPA
+  ignore_errors: True
+  command: ipa-getcert request -r -f /etc/pki/tls/certs/{{ inventory_hostname }}.crt -k /etc/pki/tls/private/{{ inventory_hostname }}.key -N  CN={{ inventory_hostname }} -D {{ inventory_hostname }} -K HTTP/{{ inventory_hostname }}
+  when: ipa_client.rc == 0
+
+- name: Generate Private Key via OpenSSL
+  openssl_privatekey:
+    path: /etc/pki/tls/private/{{ inventory_hostname }}.key
+  when: ipa_client.rc == 1
+
+- name: Generate CSR via OpenSSL
+  openssl_csr:
+    path: /etc/pki/tls/certs/{{ inventory_hostname }}.csr
+    privatekey_path: /etc/pki/tls/private/{{ inventory_hostname }}.key
+    country_name: {{ country_domain }}
+    organization_name: {{ org_name }}
+    common_name: {{ inventory_hostname }}
+  when: ipa_client.rc == 1
+
+- name: Generate Certs via OpenSSL
+  openssl_certificate:
+    path: /etc/pki/tls/certs/{{ inventory_hostname }}.crt
+    privatekey_path: /etc/pki/tls/private/{{ inventory_hostname }}.key
+    csr_path: /etc/pki/tls/certs/{{ inventory_hostname }}.csr
+    provider: selfsigned
+  when: ipa_client.rc == 1
+
+- name: Restart Apache
+  service: name=apache2 state=restarted
+
+- name: Restart Firewall
+  service: name=firewalld state=restarted
