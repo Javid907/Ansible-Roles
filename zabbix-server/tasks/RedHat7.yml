@@ -1,8 +1,0 @@
----
-- include: rpm/install_pre-requirements.yml
-- include: rpm/install_apache.yml
-- include: rpm/install_mariadb.yml
-- include: rpm/install_zabbix_server.yml
-- include: rpm/configure_selinux.yml
-
-

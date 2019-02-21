@@ -1,6 +1,0 @@
----
-- hosts: servers
-  gather_facts: yes
-  become: yes
-  roles:
-    - role: zabbix-server

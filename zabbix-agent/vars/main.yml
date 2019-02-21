@@ -1,8 +1,0 @@
----
-ansible_user:
-ansible_password:
-ansible_port:
-ansible_become: yes
-ansible_become_method: sudo
-ansible_become_pass:
-zabbix_server_ip:

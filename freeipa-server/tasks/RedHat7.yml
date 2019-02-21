@@ -1,5 +1,0 @@
----
-- include: rpm/pre-requirements_configuration.yml
-- include: rpm/install_freeipa-server.yml
-
-

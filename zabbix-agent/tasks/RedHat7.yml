@@ -1,5 +1,0 @@
----
-- include: rpm/install_zabbix_agent.yml
-- include: rpm/configure_selinux.yml
-
-

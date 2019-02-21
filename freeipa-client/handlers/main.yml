@@ -1,3 +1,0 @@
----
-- name: restart Firewall
-  systemd: name=firewalld state=restarted
