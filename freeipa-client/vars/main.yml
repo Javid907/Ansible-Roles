@@ -1,0 +1,14 @@
+---
+ansible_user:
+ansible_password:
+ansible_port:
+ansible_become: yes
+ansible_become_method: sudo
+ansible_become_pass:
+ipa_server_ip_address:
+ipa_server_hostname:
+ipaclient_principal:
+ipaclient_password:
+ipaserver_hostname:
+ipaclient_domain:
+ipaclient_realm:

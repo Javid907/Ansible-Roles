@@ -1,0 +1,99 @@
+---
+- name: Install deb in Debian 9 (stretch)
+  get_url:
+    url: https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+​stretch_all.deb
+    dest: /root/zabbix-release_4.0-2+​stretch_all.deb
+    mode: 0755
+  when: ansible_distribution == 'Debian'
+
+- name: Install a .deb package
+  apt:
+    deb: /root/zabbix-release_4.0-2+​stretch_all.deb
+  when: ansible_distribution == 'Debian'
+
+- name: Install deb in Ubuntu 18.04 (bionic)
+  get_url:
+    url: https://repo.zabbix.com/zabbix/4.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_4.0-2+bionic_all.deb
+    dest: /root/zabbix-release_4.0-2+bionic_all.deb
+    mode: 0755
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install a .deb package
+  apt:
+    deb: /root/zabbix-release_4.0-2+bionic_all.deb            
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Update all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+    force_apt_get: True
+
+- name: Install Zabbix Packages
+  apt:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - zabbix-frontend-php
+    - zabbix-server-mysql
+    - zabbix-agent
+
+- name: Transfer the script
+  copy: src=../../files/create.sql.gz dest=/usr/share/doc/zabbix-server-mysql/ mode=0755
+
+- name: Import sql in database 1
+  command: gunzip /usr/share/doc/zabbix-server-mysql/create.sql.gz
+
+- name: Import sql in database 2
+  mysql_db: name={{ database_name }} state=import target=/usr/share/doc/zabbix-server-mysql/create.sql login_user=root login_password={{ mysql_root_password }}
+
+- name: Copy Zabbix Server config file
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    owner: zabbix
+    group: zabbix
+    mode: 0640
+
+- name: Copy Zabbix Server HTTP config file
+  template:
+    src: zabbix_server_http_conf.j2
+    dest: /etc/apache2/conf-enabled/zabbix.conf
+    owner: www-data
+    group: www-data
+    mode: 0640
+
+- name: Copy Zabbix Agent config file
+  template:
+    src: zabbix_agent.conf.j2
+    dest: /etc/zabbix/zabbix_agentd.conf
+    owner: zabbix
+    group: zabbix
+    mode: 0640
+
+- name: Allow zabbix ports
+  command: firewall-cmd --permanent --add-port={{ item }}/tcp
+  with_items:
+    - "{{ 10050 }}"
+    - "{{ 10051 }}"
+  notify:
+    - restart Firewall
+
+- name: Restart Apache module
+  command: a2enmod {{ item }}
+  with_items:
+    - rewrite
+    - ssl
+
+- name: change line in vhost file
+  command: sed -i 's/httpd/apache2/' /etc/apache2/sites-enabled/{{ inventory_hostname }}.conf
+
+- name: start Zabbix Server 
+  systemd: name=zabbix-server state=restarted enabled=yes
+
+- name: start Zabbix Agent
+  systemd: name=zabbix-agent state=restarted enabled=yes
+
+- name: Restart Apache
+  systemd: name=apache2 state=restarted

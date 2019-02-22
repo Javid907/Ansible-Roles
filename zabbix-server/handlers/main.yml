@@ -1,0 +1,13 @@
+---
+- name: restart Firewall
+  systemd: name=firewalld state=restarted
+
+- name: restart Apache
+  systemd: name=httpd state=restarted
+
+- name: restart Zabbix Server
+  service: name=zabbix-server state=restarted
+
+- name: restart Zabbix Agent
+  service: name=zabbix-agent state=restarted
+

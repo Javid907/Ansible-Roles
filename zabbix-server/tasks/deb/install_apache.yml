@@ -1,0 +1,108 @@
+---
+- name: Apt - Remove packages from the cache
+  apt: autoclean=yes
+
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+    force_apt_get: True
+
+- name: Install package for Apache
+  apt:
+    name: apache2
+    state: present
+
+- name: start Apache
+  service: name=apache2 state=started enabled=yes
+
+- name: Virtual Host Config
+  template:
+    src: zabbix-vhost.j2
+    dest: /etc/apache2/sites-enabled/{{ inventory_hostname }}.conf
+    owner: www-data
+    group: www-data
+    mode: 0640
+
+- name: Install package Python-Firewall
+  apt:
+    name: python-pip
+    state: present
+
+- name: Remove UFW
+  apt:
+    name: ufw
+    state: absent
+
+- name: Install (Firewall) python package.
+  pip:
+    name: firewall
+
+- name: Install package Firewall
+  apt:
+    name: firewalld
+    state: present
+
+- name: start Firewall
+  service: name=firewalld state=started enabled=yes
+
+- name: Add port to Firewall
+  command: firewall-cmd --zone=public --add-interface={{ ansible_default_ipv4.interface }} --permanent
+  notify:
+    - restart Firewall
+
+- name: Allow HTTP and HTTPS ports
+  command: firewall-cmd --permanent --add-port={{ item }}/tcp
+  with_items:
+    - "{{ 443 }}"
+  notify:
+    - restart Firewall
+
+- name: Gather package facts
+  package_facts:
+    manager: apt
+
+- name: Kinit IPA 
+  shell: echo "{{ ipaclient_password }}" | kinit {{ ipaclient_principal }}
+  when: '"ipa-client" in ansible_facts.packages'
+
+- name: Generate cert from FreeIPA
+  ignore_errors: True
+  command: ipa-getcert request -r -f /etc/pki/tls/certs/{{ inventory_hostname }}.crt -k /etc/pki/tls/private/{{ inventory_hostname }}.key -N  CN={{ inventory_hostname }} -D {{ inventory_hostname }} -K HTTP/{{ inventory_hostname }}
+  when: '"ipa-client" in ansible_facts.packages'
+
+- name: Install (PyOpenSSL) python package.
+  pip:
+    name: pyopenssl
+  when: '"ipa-client" not in ansible_facts.packages'
+
+- name: Create directors if it doesn't exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    recurse: yes
+  with_items:
+    - '/etc/pki/tls/private/'
+    - '/etc/pki/tls/certs/'
+  when: '"ipa-client" not in ansible_facts.packages'
+
+- name: Generate Private Key via OpenSSL
+  openssl_privatekey:
+    path: /etc/pki/tls/private/{{ inventory_hostname }}.key
+  when: '"ipa-client" not in ansible_facts.packages'
+
+- name: Generate CSR via OpenSSL
+  openssl_csr: path=/etc/pki/tls/certs/{{ inventory_hostname }}.csr privatekey_path=/etc/pki/tls/private/{{ inventory_hostname }}.key country_name={{ country_domain }} organization_name={{ org_name }} common_name={{ inventory_hostname }}
+  when: '"ipa-client" not in ansible_facts.packages'
+
+- name: Generate Certs via OpenSSL
+  openssl_certificate:
+    path: /etc/pki/tls/certs/{{ inventory_hostname }}.crt
+    privatekey_path: /etc/pki/tls/private/{{ inventory_hostname }}.key
+    csr_path: /etc/pki/tls/certs/{{ inventory_hostname }}.csr
+    provider: selfsigned
+  when: '"ipa-client" not in ansible_facts.packages'
+  notify:
+    - restart Apache
+

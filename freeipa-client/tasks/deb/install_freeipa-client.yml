@@ -1,0 +1,23 @@
+---
+- name: Install IPA Server packages 
+  apt:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - freeipa-client
+
+- name: Run the installer IPA client
+  command: > 
+    ipa-client-install
+    -p {{ ipaclient_principal }}
+    -w {{ ipaclient_password }}
+    --hostname {{ inventory_hostname }}
+    --server {{ ipaserver_hostname }}
+    --domain {{ ipaclient_domain }}
+    --realm {{ ipaclient_realm }}
+    --enable-dns-updates
+    --mkhomedir
+    --unattended
+    --force-join
+

@@ -1,0 +1,82 @@
+---
+- name: Enable Zabbix Repo
+  yum:
+    name: https://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-release-4.0-1.el7.noarch.rpm
+    disable_gpg_check: yes
+    state: present
+
+- name: Install Zabbix Packages
+  yum:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - zabbix-get
+    - zabbix-agent
+    - zabbix-web-mysql
+    - zabbix-server-mysql
+
+- name: Import sql in database 1
+  command: gunzip /usr/share/doc/zabbix-server-mysql-4.0.4/create.sql.gz
+
+- name: Import sql in database 2
+  mysql_db: name={{ database_name }} state=import target=/usr/share/doc/zabbix-server-mysql-4.0.4/create.sql login_user=root login_password={{ mysql_root_password }}
+
+- name: Copy Zabbix Server config file
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    owner: zabbix
+    group: zabbix
+    mode: 0640
+
+- name: Copy Zabbix Server HTTP config file
+  template:
+    src: zabbix_server_http_conf.j2
+    dest: /etc/httpd/conf.d/zabbix.conf
+    owner: apache
+    group: apache
+    mode: 0640
+
+- name: Copy Zabbix Agent config file
+  template:
+    src: zabbix_agent.conf.j2
+    dest: /etc/zabbix/zabbix_agentd.conf
+    owner: zabbix
+    group: zabbix
+    mode: 0640
+  notify:
+    - restart Apache
+
+- name: Allow zabbix ports
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+  with_items:
+    - "{{ 10050 }}"
+    - "{{ 10051 }}"
+  notify:
+    - restart Firewall
+
+- name: replace line
+  lineinfile:
+    dest: /etc/php.ini
+    regexp: ';date.timezone ='
+    line: 'date.timezone = "{{ your_timezone }}"'
+    backrefs: yes
+  notify:
+    - restart Apache
+
+- name: Selinux disable during start agent
+  command: setenforce 0
+
+- name: start Zabbix Server 
+  service: name=zabbix-server state=restarted enabled=yes
+
+- name: start Zabbix Agent
+  service: name=zabbix-agent state=restarted enabled=yes
+
+- name: Selinux enable after start agent
+  command: setenforce 1
+

@@ -1,0 +1,43 @@
+---
+- name: Install package for Mariadb
+  yum: name=mariadb-server state=latest
+
+- name: MariaDB Conf
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    owner: mysql
+    group: mysql
+    mode: 0640
+
+- name: start Mariadb
+  service: name=mariadb state=restarted enabled=yes
+
+- name: Adds Python MySQL support on RedHat/CentOS
+  yum: name=MySQL-python state=present
+
+- name: Sets the root password v1
+  ignore_errors: True
+  mysql_user: user=root password="{{ mysql_root_password }}" host=localhost
+
+- name: Sets the root password v2
+  ignore_errors: True
+  mysql_user: user=root password="{{ mysql_root_password }}" host=localhost login_user=root login_password={{ mysql_root_password }}
+
+- name: Secures the MySQL root user for IPV6 localhost (::1)
+  mysql_user: user="root" password="{{ mysql_root_password }}" host="::1" login_user=root login_password={{ mysql_root_password }}
+
+- name: Secures the MySQL root user for IPV4 localhost (127.0.0.1)
+  mysql_user: user="root" password="{{ mysql_root_password }}" host="127.0.0.1" login_user=root login_password={{ mysql_root_password }}
+
+- name: Secures the MySQL root user for localhost domain (localhost)
+  mysql_user: user="root" password="{{ mysql_root_password }}" host="localhost" login_user=root login_password={{ mysql_root_password }}
+
+- name: Deletes anonymous MySQL server user for localhost
+  mysql_user: name='' host_all=yes state=absent login_user=root login_password={{ mysql_root_password }}   
+
+- name: Create a new database with name for Zabbix
+  mysql_db: name={{ database_name }} state=present login_user=root login_password={{ mysql_root_password }}
+
+- name: Add user for Zabbix Server 
+  mysql_user: name={{ mysql_user }} password={{ mysql_user_password }} priv='{{ database_name }}.*:ALL,GRANT' state=present host="localhost" login_user=root login_password={{ mysql_root_password }}

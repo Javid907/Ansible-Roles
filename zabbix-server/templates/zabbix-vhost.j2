@@ -1,0 +1,26 @@
+<VirtualHost {{ inventory_hostname }}:80>
+ ServerName {{ inventory_hostname }}
+ Redirect / https://{{ inventory_hostname }}
+</VirtualHost>
+
+<VirtualHost {{ inventory_hostname }}:443>
+    ServerAdmin {{ your_mail }} 
+    DocumentRoot "/usr/share/zabbix"
+    ServerName {{ inventory_hostname }}
+    ServerAlias www.{{ inventory_hostname }}
+    SSLEngine on
+    SSLCertificateFile /etc/pki/tls/certs/{{ inventory_hostname }}.crt
+    SSLCertificateKeyFile /etc/pki/tls/private/{{ inventory_hostname }}.key
+    ErrorLog "/var/log/httpd/{{ inventory_hostname }}-ssl-error_log"
+    CustomLog "/var/log/httpd/{{ inventory_hostname }}-ssl-access_log" combined
+    RewriteEngine On 
+    RewriteCond %{HTTPS}  !=on 
+    RewriteRule ^/?(.*) https://%{ServerName}/$1 [R,L] 
+</VirtualHost>
+
+
+<Directory "/usr/share/zabbix">
+    AllowOverride All
+    Require all granted
+</Directory>
+

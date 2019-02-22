@@ -1,0 +1,44 @@
+---
+- name: Install package Firewall
+  apt:
+    name: firewalld
+    state: present
+
+- name: start Firewall
+  service: name=firewalld state=started enabled=yes
+
+- name: Add port to Firewall
+  command: firewall-cmd --zone=public --add-interface={{ ansible_default_ipv4.interface }} --permanent
+  notify:
+    - restart Firewall
+
+- name: Allow FreeIPA TCP ports
+  command: firewall-cmd --permanent --add-port={{ item }}/tcp
+  with_items:
+    - "{{ 443 }}"
+    - "{{ 80 }}"
+    - "{{ 636 }}"
+    - "{{ 389 }}"
+    - "{{ 88 }}"
+    - "{{ 464 }}"
+    - "{{ 53 }}"
+    - "{{ 7389 }}"
+  notify:
+    - restart Firewall
+
+- name: Allow FreeIPA UDP ports
+  command: firewall-cmd --permanent --add-port={{ item }}/udp
+  with_items:
+    - "{{ 53 }}"
+    - "{{ 88 }}"
+    - "{{ 463 }}"
+    - "{{ 123 }}"
+  notify:
+    - restart Firewall
+
+- name: Add line to hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.line }}"
+  with_items:
+    - { line: '{{ ipa_server_ip_address }}      {{ ipa_server_hostname }}' }

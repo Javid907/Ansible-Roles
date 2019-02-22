@@ -1,0 +1,60 @@
+---
+- name: Add an Apt signing key, uses whichever key is at the URL
+  apt_key:
+    url: https://packages.sury.org/php/apt.gpg
+    state: present
+
+- name: Add line to repository
+  lineinfile:
+    dest: /etc/apt/sources.list.d/php.list
+    line: "deb https://packages.sury.org/php/ stretch main"
+    insertafter: EOF
+    create: yes
+
+- name: Add line to source 
+  lineinfile:
+    dest: /etc/apt/sources.list
+    line: "deb-src https://packages.sury.org/php/ stretch main"
+    insertafter: EOF
+
+- name: Edit Source List file 
+  command: sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
+
+- name: Install a software-properties-common
+  apt:
+    name: software-properties-common
+
+- name: Add specified repository into sources list.
+  apt_repository:
+    repo: ppa:ondrej/php
+
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+    force_apt_get: True
+
+- name: Install a list of packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - ca-certificates
+    - apt-transport-https
+    - php7.2
+    - php7.2-cli
+    - php7.2-common 
+    - php7.2-bcmath 
+    - php7.2-ldap 
+    - php7.2-mbstring 
+    - php7.2-mysql 
+    - php7.2-zip 
+    - php7.2-xml 
+    - php7.2-gd
+
+- name: replace line
+  lineinfile: 
+    dest: /etc/php/7.2/apache2/php.ini
+    regexp: ';date.timezone =' 
+    line: 'date.timezone = "{{ your_timezone }}"'
+    backrefs: yes

@@ -1,0 +1,39 @@
+---
+- name: Install IPA Server packages 
+  apt:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - freeipa-client
+
+- name: Run the installer IPA client
+  command: > 
+    ipa-client-install
+    -p {{ ipaclient_principal }}
+    -w {{ ipaclient_password }}
+    --hostname {{ inventory_hostname }}
+    --server {{ ipaserver_hostname }}
+    --domain {{ ipaclient_domain }}
+    --realm {{ ipaclient_realm }}
+    --enable-dns-updates
+    --mkhomedir
+    --unattended
+    --force-join
+
+- name: Install IPA Server packages 
+  apt:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - freeipa-server
+    - freeipa-server-dns
+
+- name: Setup FreeIPA Replica server
+  ignore_errors: True
+  command: ipa-replica-install -p {{ ipadirectory_password }} -w {{ ipaclient_password }} --setup-dns --no-forwarders --unattended
+
+- name: Setup FreeIPA CA server
+  command: ipa-ca-install -U -P {{ ipaadmin_username }}  -p {{ ipadirectory_password }} -w {{ ipaclient_password }} --unattended
+
