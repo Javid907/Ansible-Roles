@@ -5,12 +5,12 @@ ansible_port:
 ansible_become: yes
 ansible_become_method: sudo
 ansible_become_pass:
-ipa_server_ip_address: 10.10.3.10
-ipa_server_hostname: ubuntu.test.az
-ipaclient_principal: admin
-ipaserver_hostname: ubuntu.test.az
-ipaclient_domain: test.az
-ipaclient_realm: TEST.AZ
-ipadirectory_password: cavid1995
-ipaclient_password: cavid1995
-ipaadmin_username: admin
+ipa_server_ip_address:
+ipa_server_hostname:
+ipaclient_principal:
+ipaserver_hostname:
+ipaclient_domain: 
+ipaclient_realm:
+ipadirectory_password:
+ipaclient_password:
+ipaadmin_username:

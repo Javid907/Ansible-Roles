@@ -5,22 +5,22 @@ ansible_port:
 ansible_become: yes
 ansible_become_method: sudo
 ansible_become_pass:
-ipa_server_ip_address: 10.10.3.10
-ipa_server_hostname: ubuntu.test.az
+ipa_server_ip_address:
+ipa_server_hostname:
 ipaserver_base_command: ipa-server-install -U 
 ipaserver_configure_ssh: True
 ipaserver_configure_sshd: True
-ipaserver_dns_forwarder: 8.8.8.8
-ipaserver_domain: test.az
+ipaserver_dns_forwarder:
+ipaserver_domain: 
 ipaserver_hbac_allow: True
-ipaserver_idstart: 2000
+ipaserver_idstart: 
 ipaserver_idmax: False
 ipaserver_mkhomedir: True
-ipaserver_realm: TEST.AZ
+ipaserver_realm:
 ipaserver_setup_dns: True
 ipaserver_setup_ntp: True
 ipaserver_ssh_trust_dns: True
 ipaserver_ui_redirect: True
 ipaserver_manage_firewalld: True
-ipaserver_admin_password: cavid1995
-ipaserver_dir_admin_password: cavid1995
+ipaserver_admin_password:
+ipaserver_dir_admin_password:
